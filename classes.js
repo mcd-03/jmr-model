@@ -1,3 +1,8 @@
+// templateUrl is the url of the sheet that contains the template for the 'Conferencing Tab'
+var templateUrl = '#';
+// importUrl is the url of the sheet that contains the raw data for every JMR student
+var importUrl = '#';
+
 // class and method definitions
 class Teacher {
   constructor(name, dataUrl, blocks, grade, subject) {
@@ -6,11 +11,7 @@ class Teacher {
     this.dataUrl = dataUrl;
     this.blocks = blocks;
     this.grade = grade;
-    this.subject = subject;
-    // templateUrl is the url of the sheet that contains the template for the 'Conferencing Tab'
-    this.templateUrl = '#';
-    // importUrl is the url of the sheet that contains the raw data for every JMR student
-    this.importUrl = '#';
+    this.subject = subject; // now depreciated as the subject is determed by the arrays inside the blocks array
   };
   
   // driver method to handle the entire update (update both data and conferencing tab)
@@ -32,16 +33,17 @@ class Teacher {
   updateTabs() {
     for (var block in this.blocks) {
       console.log('processing block: ', this.blocks[block]);
-      var tab = 'Block ' + this.blocks[block].toString();
+      var tab = 'Block ' + this.blocks[block][0];
       var ss = SpreadsheetApp.getActiveSpreadsheet();
       var sheet = ss.getSheetByName(tab);
 
       if (sheet != null) {
         sheet.activate();
-        var name = ss.getName().split(" ")[0];
-        var block = sheet.getName().slice(-1);
+        var name = ss.getName().split(" ")[0]; // provides the teacher's name to importNewData()
+        var subject = this.blocks[block][1];
+        var block = this.blocks[block][0];
         this.clearOldData();
-        this.importNewData(name, block);
+        this.importNewData(name, block, subject);
         this.formatNewData();
       };
     };
@@ -61,35 +63,24 @@ class Teacher {
   };
 
   // imports the new data into the active sheet
-  importNewData(name, block) {
+  importNewData(name, block, subject) {
     // gets active spreadsheet and sheet
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Block ' + block).activate(); 
-    
-    // adds the headers to the data
-    ss.getRange('A2:S2').setValues([['ID', 'Last Name', 'First Name', 'Prev EOG/EOC Pctl', 'Prev EOG/EOC Lvl', 'MAPS Fall RIT', 'MAPS Fall Pctl', 'MAPS Fall Lvl (Proj)', 'MAPS Winter RIT', 'MAPS Winter Pctl', 'MAPS Winter Lvl (Proj)', 'MAPS Spring RIT', 'MAPS Spring Pctl', 'MAPS Spring Lvl (Proj)', 'EVAAS EOG/EOC Pctl', 'EVAAS EOG Lvl', 'EOG/EOC Pctl', 'EOG/EOC Lvl', 'Change EVAAS to EOG/EOC']]);
-    ss.getRange('T2:V2').setValues([['MAP Pctl Change F-W', 'MAP Pctl Change W-S', 'MAP Pctl Change F-S']]);
 
     // adds query to import new data
     // update the url below with the sheet that houses the current schoolwide data
     // then update the query with the appropriate columns
     // the tab to query is referenced based on the subject the teacher teaches
     var name_string = "'" + name + "'";
-    var rangeString = '"' + this.subject + '!A:AC"';
-    var formula = '=QUERY(importrange(' + '"'+ this.importUrl + '"' + ', ' + rangeString + '), "select Col1, Col2, Col3, Col8, Col9, Col11, Col12, Col13, Col15, Col16, Col17, Col19, Col20, Col21, Col23, Col24, Col27, Col28, Col29 where Col4 = ' + name_string + ' and Col5 = ' + block + '", 0)';
-    ss.getRange('A3').setFormula(formula);
+    var block_string = "'" + block + "'";
+    var rangeString = '"' + subject + '!A:AI"';
+    var formula = '=QUERY(importrange(' + '"'+ importUrl + '"' + ', ' + rangeString + '), "select Col1, Col2, Col3, Col8, Col9, Col11, Col12, Col13, Col15, Col16, Col17, Col19, Col20, Col21, Col23, Col24, Col25, Col26, Col27, Col30, Col31, Col32, Col33, Col34, Col35 where Col4 = ' + name_string + ' and Col5 = ' + block_string + '")';
+    ss.getRange('A2').setFormula(formula);
    
     // setting summary formulas on top row
     ss.getRange('D1').setFormula('=iferror(average(D3:D))')
-    .autoFill(ss.getRange('D1:V1'), SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES); 
-
-    // sets formulas to calculate change in MAPS
-    var formulas = [['=if(and(not(isblank(J3)),NOT(ISBLANK(G3))),J3-G3,"")', '=if(and(not(isblank(M3)),NOT(ISBLANK(J3))),M3-J3,"")', '=if(and(not(isblank(M3)),NOT(ISBLANK(G3))),M3-G3,"")']]
-    sheet.getRange('T3:V3').setFormulas(formulas);
-
-    // copies the formulas in colums S:U down to the last row with data
-    var last = sheet.getMaxRows();
-    ss.getRange('T3:V3').copyTo(ss.getRange('T4:V' + last.toString()), SpreadsheetApp.CopyPasteType.PASTE_FORMULA, false);
+    .autoFill(ss.getRange('D1:Y1'), SpreadsheetApp.AutoFillSeries.DEFAULT_SERIES); 
 
     // log sucessful import
     console.log('new data imported');
@@ -112,8 +103,8 @@ class Teacher {
     .setHorizontalAlignment('center');
 
     // sets column colors to help break up data
-    ss.getRangeList(['A:C', 'F:H', 'L:N', 'Q:R', 'T:V']).setBackground('#f3f3f3');
-    ss.getRangeList(['S:S']).setBackground('#FFFDC3');
+    ss.getRangeList(['A:C', 'F:H', 'L:N','T:U', 'W:Y']).setBackground('#f3f3f3');
+    ss.getRangeList(['V:V']).setBackground('#FFFDC3');
     
     // formats the data headers
     ss.getRange('1:1').setNumberFormat("0.0");
@@ -124,7 +115,7 @@ class Teacher {
 
     // hard-codes the data imported with the query function
     var last = sheet.getMaxRows();
-    var range = ss.getRange('A2:S' + last.toString());
+    var range = ss.getRange('A2:Z' + last.toString());
     range.copyTo(range,SpreadsheetApp.CopyPasteType.PASTE_VALUES, false);
 
     // log sucessful format
@@ -150,7 +141,7 @@ class Teacher {
 
   addConferencingTab() {
     console.log('importing new conferencing sheet');
-    var ss = SpreadsheetApp.openByUrl(this.templateUrl);
+    var ss = SpreadsheetApp.openByUrl(templateUrl);
     var sourceSheet = ss.getSheetByName('Conferencing Sheet');
     var destination = SpreadsheetApp.openByUrl(this.dataUrl);
     sourceSheet.copyTo(destination);
