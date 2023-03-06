@@ -90,4 +90,3 @@ var Pullout = new PLC([KVanderhill, Cohen], 'Pullout');
 
 // instantiate school
 var JMR = new School([EigthGradeTeachers, SeventhGradeTeachers, SixthGradeTeachers]);
-

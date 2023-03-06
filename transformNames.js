@@ -8,7 +8,6 @@ function transformNames() {
   // Replaces default teacher name (long) in PWS with a shortened teacher name
   // Uses the fullToShortNameMapping
   // Run anytime the Automatic Rosters spreadsheet is updated
-  
   function transformELAandMathLongWithShortName() {
     var ss = SpreadsheetApp.openByUrl('#');
   
@@ -66,7 +65,6 @@ function transformNames() {
   // Replaces default teacher name (long) in PWS with a shortened teacher name
   // Uses the fullToShortNameMapping
   // Run anytime the Automatic Rosters spreadsheet is updated
-  
   function transformSSandScienceLongWithShortName() {
     var ss = SpreadsheetApp.openByUrl('#');
   

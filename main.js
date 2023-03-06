@@ -12,3 +12,4 @@ function main() {
     transformNames();
     validateNavigatorHeaders();
   };
+  
